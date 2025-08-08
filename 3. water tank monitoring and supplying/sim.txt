@@ -1,0 +1,55 @@
+void sim_init()
+{
+    SCON=0X50;    //0101 0000 
+    TMOD=0X20;      //FOR AUTO RELOAD MODE OF TIMER 1   0010 0000
+    TH1=0XFD; //FOR 9600 BAUD RATE OF THE MICROCONTROLLER
+    TL1=0XFD; //load the value of high time
+    TR1=1;  //START TIMER
+}
+
+void tx(unsigned char send)
+{
+    SBUF = send;
+    while(TI==0);
+    TI=0;   //reset the timer interrupt
+
+}
+
+void tx_string(unsigned char *s)
+{
+    while(*s)
+        tx(*s++);
+}
+
+void sms(unsigned char *num1, unsigned char *msg)
+{
+    tx_string("AT");
+    tx(0x0d); 
+		//tx(0x0a);  // Try both CR and LF
+    delay(200);
+
+    tx_string("AT+CMGF=1");
+    tx(0x0d); //tx(0x0a);
+    delay(200);
+	
+    tx_string("AT+CMGS=");
+		tx('"');
+    tx_string(num1);
+    tx('"');
+    tx(0x0d); 
+    delay(500); // Increase if needed
+
+    // Ideally, wait here for '>' prompt from SIM800L
+
+  tx_string(msg);
+    tx(0x1A); // CTRL+Z to send
+    delay(3000); // Wait for SMS send to complete
+}
+
+void main()
+{
+		sim_init();
+		delay(100);
+		sms(number, "SIM check completed");
+	
+}
